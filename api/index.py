@@ -4,10 +4,11 @@ from split_words import Splitter
 app = Flask(__name__)
 splitter = Splitter()
 
-
+ 
 def is_german_word(word):
     dictionary = Dictionary.from_files('dictionary/de_DE')
     return dictionary.lookup(word)
+
 
 
 def split_and_check_german(word, level=0):
