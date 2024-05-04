@@ -3,6 +3,8 @@ from compound_split import char_split
 from spylls.hunspell import Dictionary
 from split_words import Splitter
 app = Flask(__name__)
+
+
 splitter = Splitter()
 
 
@@ -73,8 +75,6 @@ final_string = ' '.join(final_split)
 
 
 
-
-
 @app.route("/api/python")
 def hello_world():
-    return final_string
+    return 2
