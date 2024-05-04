@@ -1,2 +1,4 @@
 numpy
 Flask
+spylls
+compound_split
