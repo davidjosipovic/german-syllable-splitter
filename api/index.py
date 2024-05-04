@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 
 def is_german_word(word):
-    dictionary = Dictionary.from_files('api/de_DE/de_DE')
+    dictionary = Dictionary.from_files('dictionary/de_DE')
     return dictionary.lookup(word)
 
 
