@@ -1,8 +1,9 @@
 from flask import Flask
 from compound_split import char_split
 from spylls.hunspell import Dictionary
+from split_words import Splitter
 app = Flask(__name__)
-
+splitter = Splitter()
 
 
 def is_german_word(word):
@@ -15,7 +16,7 @@ def split_and_check_german(word, level=0):
     compounds = []
 
     # Split the compound word into parts
-    splits = char_split.split_compound(word)
+    splits = splitter.split_compound(word)
 
     print(f"{indent}Splitting: {word}")
 
