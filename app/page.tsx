@@ -2,14 +2,12 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [inputValue, setInputValue] = useState<string>("");
-  const [outputValue, setOutputValue] = useState<string>("");
+  const [inputValue, setInputValue] = useState("");
+  const [outputValue, setOutputValue] = useState("");
 
-  // Function to handle Enter key press
-  const handleKeyPress = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyPress = async (event:any) => {
     if (event.key === "Enter") {
       try {
-        // Call your API here with the input value
         const response = await fetch(`/api/python`, {
           method: "POST",
           headers: {
@@ -19,50 +17,72 @@ export default function Home() {
         });
 
         if (response.ok) {
-          // If the response is successful, do something with the response
           const data = await response.json();
           console.log("API response:", data);
-          setOutputValue(data)
+          setOutputValue(data);
         } else {
-          // If the response is not successful, handle the error
           console.error("API request failed:", response.status, response.statusText);
         }
       } catch (error) {
-        // If an error occurs during the fetch call, handle the error
         console.error("Error:", error);
       }
     }
   };
 
-  // Function to handle button click to set input value
   const handleSetInputValue = () => {
     setInputValue(`Diät Knie Knie Auto Seeufer Katze Tatze Pfütze putzen platzen Bürste Kiste Hamster Fenster hinstellen darstellen erstarren plötzlich Postauto Kratzbaum boxen heben rodeln Schifffahrt Mussspiel wichtigsten besuchen gewinnen vergessen abangeln Kreuzotter poetisch Nationen aber über Kreuzklemme Foxtrott witzlos witzig wegschmeißen Bettüberzug wirtschaft Beziehungsknatsch Gletscher Wurstscheibe Borretschgewächs Bodden Handball Neubau Stalltür Autobahnanschlussstelle`);
   };
 
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch(`/api/python`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ input: inputValue })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("API response:", data);
+        setOutputValue(data);
+      } else {
+        console.error("API request failed:", response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   return (
-    <main className="flex items-center justify-center h-screen">
-      <div className="w-1/3">
-        {/* Input field */}
+    <main className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-3xl font-semibold text-center mb-4">German Syllable Splitter</h1>
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress} // Add event handler for Enter key press
-          className="w-full px-4 py-2 text-lg border border-gray-300 rounded-lg shadow-md focus:outline-none focus:border-blue-500"
+          onKeyPress={handleKeyPress}
+          className="w-full px-4 py-2 text-lg border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           placeholder="Enter something..."
         />
-        <p className="mt-0 text-sm">Press ENTER to split</p>
-        {/* Output element */}
-        <h2 className="mt-4 text-xl underline">Output:</h2>
-        <p className="mt-0 text-xl bg-gray-100 rounded-md">{outputValue}</p>
-
-        {/* Button to set input value */}
-        <button
-          onClick={handleSetInputValue}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-        >
-          Set Test Input
-        </button>
+        <h2 className="mt-4 text-xl font-semibold">Output:</h2>
+        <p className="mt-2 text-lg bg-gray-200 rounded-md p-2">{outputValue}</p>
+        <div className="flex justify-between mt-4">
+          <button
+            onClick={handleSetInputValue}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+          >
+            Set Test Input
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:bg-green-600"
+          >
+            Split
+          </button>
+        </div>
       </div>
     </main>
   );
