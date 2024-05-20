@@ -1,5 +1,6 @@
 from flask import Flask, request
 import re
+import string
 from split_words import Splitter
 from spylls.hunspell import Dictionary
 import json
@@ -15,26 +16,34 @@ def syllableSplitter():
     input=request_data['input']
 
     def is_german(word):
-        return dictionary.lookup(word)
+        if word=="Ans" or word=="An":
+            return False
+        if word=="Ich" or word=="ich":
+            return False
+        if word=="Etsch":
+            return False
+        return dictionary.lookup(string.capwords(word))
 
-    def split_and_check_german_compounds(word):
+    def split_and_check_german_compounds(word, depth=2):
+        bad_words=["Nationen"]
         compounds = []
-
+        if word in bad_words:
+            return [word]
         splits = splitter.split_compound(word)
-
-        if not splits:
+    
+        if not splits or depth == 0:
             return []
 
         for i in range(min(len(splits), 3)):
             first_part = splits[i][1]
             second_part = splits[i][2]
-
             if first_part == second_part:
                 return [first_part]
-
-            if is_german(first_part) and is_german(second_part):
-                first_split = split_and_check_german_compounds(first_part)
-                second_split = split_and_check_german_compounds(second_part)
+            
+        
+            if ((((is_german(first_part) or is_german(first_part[:-1])) or is_german(second_part)) and depth==2 and len(first_part)+len(second_part)>=13) or ((is_german(first_part) or is_german(first_part[:-1])) and is_german(second_part))):
+                first_split = split_and_check_german_compounds(first_part, depth - 1)
+                second_split = split_and_check_german_compounds(second_part, depth - 1)
 
                 if first_split and second_split:
                     compounds.extend(first_split)
@@ -46,8 +55,9 @@ def syllableSplitter():
 
         if compounds == []:
             compounds = [word]
-
         return compounds
+
+
 
     def split_sentence_and_check_german_compounds(sentence):
         words = re.findall(r"[\w']+|[.,!?;]", sentence)
@@ -62,21 +72,24 @@ def syllableSplitter():
 
     def separate_prefix(word):
         prefixes = ["an", "ab", "auf", "aus", "dis", "ein", "fehl", "her", "hin", "haupt", "in", "dar", "durch",
-                    "los", "mit", "nach","ge", "von", "vor", "weg", "um", "un", "ur", "ent", "er", "ver", "zer", "miss",
+                    "los", "mit", "nach","ge","leb", "von", "vor", "weg", "um", "un", "ur", "ent", "er", "ver", "zer", "miss",
                     "miß", "niss", "niß", "ex", "non", "super", "trans", "kon", "hoch", "stink", "stock", "tief",
                     "tod", "erz", "unter", "über", "hinter", "wider", "wieder", "weiter", "zurück", "zurecht",
                     "zusammen", "hyper", "inter"]
 
         for prefix in prefixes:
-            if word.startswith(prefix) :
+            if word.startswith(prefix) and word[len(prefix):]!="ssen" and word[len(prefix):]!="ts" and word[len(prefix):]!="er" :
                 return [prefix, word[len(prefix):]]
 
         return ["", word]
 
     def split_word_into_syllables(word):
+        
         vowels = ['a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü', 'ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
+        vowelsdouble = ['ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
         consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'ß', 'sch', 'ch', 'ck', 'qu', 'ph']
         new_word = []
+        forbidden=['sk','br']
         
         i = 0
         while i < len(word):
@@ -103,72 +116,137 @@ def syllableSplitter():
             new_word.append(sequence)
             i = j
         
-
-        
-        for i in range(len(new_word) - 3):
-            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels:
+        # VCCV->VC-CV
+        i=0
+        while i<(len(new_word)- 3):
+            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels and new_word[i+1]+new_word[i+2] not in forbidden:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
+            i+=1
+        
+        
 
-        for i in range(len(new_word) - 4):
+        # VCCCV->VCC-CV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in consonants and new_word[i+3] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 2):
-            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in vowels:
+        # VCV->V-CV
+        i=0
+        while i<(len(new_word)- 2):
+            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in vowels and (i!=0 or new_word[i] in vowelsdouble):
                 new_word = new_word[:i+1] + ['-'] + new_word[i+1:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 3):
+        # VstV->Vs-tV
+        i=0
+        while i<(len(new_word)- 3):
             if new_word[i] in vowels and new_word[i+1]=="s" and new_word[i+2]=="t" and new_word[i+3] in vowels:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 4):
+        # VCstV->VCs-tV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2]=="s" and new_word[i+3]=="t" and new_word[i+4] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
-
-        for i in range(len(new_word) - 4):
+            i+=1
+        
+        # VstCV->Vs-tCV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1]=="s" and new_word[i+2]=="t" and new_word[i+3] in consonants and new_word[i+4] in vowels:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
-        
-        for i in range(len(new_word) - 4):
+            i+=1
+
+        # VxtCV->Vx-tCV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1]=="x" and new_word[i+2]=="t" and new_word[i+3] in consonants and new_word[i+4] in vowels:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 3):
+        # VtzV->Vt-zV
+        i=0
+        while i<(len(new_word)- 3):
             if new_word[i] in vowels and new_word[i+1]=="t" and new_word[i+2]=="z" and new_word[i+3] in vowels:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
-        
-        for i in range(len(new_word) - 4):
+            i+=1
+
+        # VCtzV->VCt-zV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2]=="t" and new_word[i+3]=="z" and new_word[i+4] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 4):
+        # VtzCV->Vtz-CV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1]=="t" and new_word[i+2]=="z" and new_word[i+3] in consonants and new_word[i+4] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
-        
-        for i in range(len(new_word) - 3):
+            i+=1
+
+        # VpfV->Vp-fV
+        i=0
+        while i<(len(new_word)- 3):
             if new_word[i] in vowels and new_word[i+1]=="p" and new_word[i+2]=="f" and new_word[i+3] in vowels:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 4):
+        # VCpfV->VCp-fV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2]=="p" and new_word[i+3]=="f" and new_word[i+4] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
+            i+=1
 
-        for i in range(len(new_word) - 4):
+        
+        # VpfCV->Vpf-CV
+        i=0
+        while i<(len(new_word)- 4):
             if new_word[i] in vowels and new_word[i+1]=="p" and new_word[i+2]=="f" and new_word[i+3] in consonants and new_word[i+4] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
+            i+=1
+
+        # CVVC->CV-VC
+        i=0
+        while i<(len(new_word)- 3):
+            if new_word[i] in consonants and new_word[i+1] in vowels and new_word[i+2] in vowels and new_word[i+3] in consonants:
+                new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+                continue
+            i+=1
+        
+    # VCCV->V-CCV
+        i=0
+        while i<(len(new_word)- 3):
+            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels:
+                new_word = new_word[:i+1] + ['-'] + new_word[i+1:]
+                continue
+            i+=1
+        
+        # 2 ista suglasnika u sredini riječi se dijele
+        i=0
+        while i<(len(new_word)- 3):
+            if new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+1]== new_word[i+2] :
+                new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+                continue
+            i+=1
+
 
         new_word_string=""
         for el in new_word:
@@ -193,19 +271,18 @@ def syllableSplitter():
         return separated_word
 
     # Define the sentence
-    sentence = "Diät Knie Knie Auto Seeufer Katze Tatze Pfütze putzen platzen Bürste Kiste Hamster Fenster hinstellen darstellen erstarren plötzlich Postauto Kratzbaum boxen heben rodeln Schifffahrt Mussspiel wichtigsten besuchen gewinnen vergessen abangeln Kreuzotter poetisch Nationen aber über Kreuzklemme Foxtrott witzlos witzig wegschmeißen Bettüberzug wirtschaft Beziehungsknatsch Gletscher Wurstscheibe Borretschgewächs Bodden Handball Neubau Stalltür Autobahnanschlussstelle"
-    sentence=input
+
+    sentence = "Diät Knie Knie Auto Seeufer Katze Tatze Pfütze putzen platzen Bürste Kiste Hamster Fenster hinstellen darstellen erstarren plötzlich Postauto Kratzbaum boxen heben rodeln Schifffahrt Mussspiel wichtigsten besuchen gewinnen vergessen abangeln Kreuzotter poetisch Nationen aber über Kreuzklemme Foxtrott witzlos witzig wegschmeißen Bettüberzug wirtschaft Beziehungsknatsch Gletscher Wurstscheibe Borretschgewächs Bodden Handball Neubau  Stalltür Autobahnanschlussstelle Laufschuhe Baustelle Lebkuchen Himbeere Klassenzimmer Hubbleteleskop Botschaft Schokoladenfabrik Hühnersuppe Schweinebraten Halsschmerzen Weltanschauung Weltschmerz Weihnachtsbaum Kugelschreiber Bohnensalat Freundschaftsbezeigung Weihnachtsmannfigur Glasflächenreinigung"
     # Call the function to split and check if the parts are German
     final_splits = split_sentence_and_check_german_compounds(sentence)
-
     # Apply syllable splitting to every word in the sentence
     final_splits_syllable = [finish_word(word.lower()) for word in final_splits]
     final_splits_syllable=" ".join(final_splits_syllable)
+    final_splits_syllable=re.sub(r'\s{2,}', ' ', final_splits_syllable)
+    # Join the splits into a single string with spaces
     final_splits_syllable=json.dumps(final_splits_syllable)
-
     # Join the splits into a single string with spaces
     print(final_splits_syllable)
-
 
 
     return final_splits_syllable
