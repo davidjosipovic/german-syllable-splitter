@@ -60,7 +60,7 @@ def syllableSplitter():
 
 
     def split_sentence_and_check_german_compounds(sentence):
-        words = re.findall(r"[\w']+|[.,!?;]", sentence)
+        words = re.findall(r"[\w']+|[.,!?;:]", sentence)
         final_splits = []
         for word in words:
             if word.isalnum():
@@ -278,6 +278,7 @@ def syllableSplitter():
     final_splits_syllable = [finish_word(word.lower()) for word in final_splits]
     final_splits_syllable=" ".join(final_splits_syllable)
     final_splits_syllable=re.sub(r'\s{2,}', ' ', final_splits_syllable)
+    final_splits_syllable = re.sub(r'\s+([.,!?;:])', r'\1', final_splits_syllable)
     # Join the splits into a single string with spaces
     final_splits_syllable=json.dumps(final_splits_syllable)
     # Join the splits into a single string with spaces
