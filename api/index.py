@@ -283,6 +283,6 @@ def syllableSplitter():
     final_splits_syllable=json.dumps(final_splits_syllable)
     # Join the splits into a single string with spaces
     print(final_splits_syllable)
-
+    
 
     return final_splits_syllable
