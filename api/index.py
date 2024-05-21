@@ -16,12 +16,16 @@ def syllableSplitter():
     input=request_data['input']
 
     def is_german(word):
+        
         if word=="Ans" or word=="An" or word=="und":
             return False
         if word=="Ich" or word=="ich":
             return False
         if word=="Etsch":
             return False
+        if string.capwords(word)=="Sonn":
+            return True
+
         return dictionary.lookup(string.capwords(word))
 
     def split_and_check_german_compounds(word, depth=2):
@@ -55,6 +59,7 @@ def syllableSplitter():
 
         if compounds == []:
             compounds = [word]
+        
         return compounds
 
 
@@ -78,7 +83,7 @@ def syllableSplitter():
                     "zusammen", "hyper", "inter"]
 
         for prefix in prefixes:
-            if word.startswith(prefix) and word[len(prefix):]!="ssen" and word[len(prefix):]!="ts" and word[len(prefix):]!="er" and word!="und" :
+            if word.startswith(prefix) and word[len(prefix):]!="ssen" and word[len(prefix):]!="ts" and word[len(prefix):]!="er" and word!="und" and word.startswith("eine")==False and word!="gerne" :
                 return [prefix, word[len(prefix):]]
 
         return ["", word]
