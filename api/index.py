@@ -16,7 +16,7 @@ def syllableSplitter():
     input=request_data['input']
 
     def is_german(word):
-        if word=="Ans" or word=="An":
+        if word=="Ans" or word=="An" or word=="und":
             return False
         if word=="Ich" or word=="ich":
             return False
@@ -25,7 +25,7 @@ def syllableSplitter():
         return dictionary.lookup(string.capwords(word))
 
     def split_and_check_german_compounds(word, depth=2):
-        bad_words=["Nationen"]
+        bad_words=["Nationen,und"]
         compounds = []
         if word in bad_words:
             return [word]
@@ -78,7 +78,7 @@ def syllableSplitter():
                     "zusammen", "hyper", "inter"]
 
         for prefix in prefixes:
-            if word.startswith(prefix) and word[len(prefix):]!="ssen" and word[len(prefix):]!="ts" and word[len(prefix):]!="er" :
+            if word.startswith(prefix) and word[len(prefix):]!="ssen" and word[len(prefix):]!="ts" and word[len(prefix):]!="er" and word!="und" :
                 return [prefix, word[len(prefix):]]
 
         return ["", word]
@@ -272,9 +272,8 @@ def syllableSplitter():
 
     # Define the sentence
 
-    sentence = "Diät Knie Knie Auto Seeufer Katze Tatze Pfütze putzen platzen Bürste Kiste Hamster Fenster hinstellen darstellen erstarren plötzlich Postauto Kratzbaum boxen heben rodeln Schifffahrt Mussspiel wichtigsten besuchen gewinnen vergessen abangeln Kreuzotter poetisch Nationen aber über Kreuzklemme Foxtrott witzlos witzig wegschmeißen Bettüberzug wirtschaft Beziehungsknatsch Gletscher Wurstscheibe Borretschgewächs Bodden Handball Neubau  Stalltür Autobahnanschlussstelle Laufschuhe Baustelle Lebkuchen Himbeere Klassenzimmer Hubbleteleskop Botschaft Schokoladenfabrik Hühnersuppe Schweinebraten Halsschmerzen Weltanschauung Weltschmerz Weihnachtsbaum Kugelschreiber Bohnensalat Freundschaftsbezeigung Weihnachtsmannfigur Glasflächenreinigung"
     # Call the function to split and check if the parts are German
-    final_splits = split_sentence_and_check_german_compounds(sentence)
+    final_splits = split_sentence_and_check_german_compounds(input)
     # Apply syllable splitting to every word in the sentence
     final_splits_syllable = [finish_word(word.lower()) for word in final_splits]
     final_splits_syllable=" ".join(final_splits_syllable)
