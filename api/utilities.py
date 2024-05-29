@@ -1,4 +1,3 @@
-import re
 import string
 from spylls.hunspell import Dictionary
 from split_words import Splitter
