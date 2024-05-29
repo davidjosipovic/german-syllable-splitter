@@ -14,6 +14,3 @@ def german_syllable_splitter():
     syllables = json.dumps(syllables)
     
     return syllables
-
-if __name__ == "__main__":
-    app.run(debug=True)
