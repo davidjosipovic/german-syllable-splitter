@@ -72,7 +72,7 @@ export default function Home() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full px-4 py-2 text-lg border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 text-lg pr-20 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               placeholder="Enter a single word..."
               maxLength={40}
             />
@@ -89,7 +89,7 @@ export default function Home() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full px-4 py-2 h-60 text-lg border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 h-60 pr-16 text-lg border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               placeholder="Enter a sentence..."
             ></textarea>
             <button
