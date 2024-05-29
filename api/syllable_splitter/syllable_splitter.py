@@ -1,6 +1,6 @@
 import re
 from split_words import Splitter
-from utilities import compound_splitter, separate_prefix, syllable_splitter
+from api.utilities.utilities import compound_splitter, separate_prefix, syllable_splitter
 
 splitter = Splitter()
 

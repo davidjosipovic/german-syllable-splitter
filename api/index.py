@@ -1,5 +1,5 @@
 from flask import Flask, request
-from syllable_splitter import split_input
+from api.syllable_splitter.syllable_splitter import split_input
 import json
 
 app = Flask(__name__)
@@ -14,3 +14,5 @@ def german_syllable_splitter():
     syllables = json.dumps(syllables) 
     
     return syllables
+
+
