@@ -11,6 +11,6 @@ def german_syllable_splitter():
     
     syllables = split_input(input_data)
     
-    syllables = json.dumps(syllables)
+    syllables = json.dumps(syllables) 
     
     return syllables
