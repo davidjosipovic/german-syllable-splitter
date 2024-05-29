@@ -1,21 +1,13 @@
-from flask import Flask, request
 import re
 import string
-from split_words import Splitter
 from spylls.hunspell import Dictionary
-import json
+from split_words import Splitter
+import string
 
-app = Flask(__name__)
-splitter = Splitter()
 dictionary = Dictionary.from_files('dictionary/de_DE')
+splitter = Splitter()
 
-
-@app.route("/api/python", methods=["POST"])
-def syllableSplitter():
-    request_data = request.get_json()
-    input=request_data['input']
-
-    def is_german(word):
+def is_german(word):
         true_words=["Sonn","Lich"]
         false_words=["Ans","An","Und","Freund","Ist","Ich","Etsch"]
 
@@ -26,7 +18,7 @@ def syllableSplitter():
 
         return dictionary.lookup(string.capwords(word))
 
-    def split_and_check_german_compounds(word, depth=2):
+def compound_splitter(word, depth=2):
         not_compound_word=["nationen","und","brandenburger","versprochen"]
         compounds = []
         if word.lower() in not_compound_word:
@@ -37,15 +29,19 @@ def syllableSplitter():
             return []
 
         for i in range(min(len(splits), 3)):
-            first_part = splits[i][1]
-            second_part = splits[i][2]
+            first_part = splits[i][1].lower()
+            second_part = splits[i][2].lower()
+
+            
             if first_part == second_part:
+                if word.istitle():
+                    first_part=first_part.title()
                 return [first_part]
             
         
             if ((((is_german(first_part) or is_german(first_part[:-1])) or is_german(second_part)) and depth==2 and len(first_part)+len(second_part)>=13) or ((is_german(first_part) or is_german(first_part[:-1])) and is_german(second_part))):
-                first_split = split_and_check_german_compounds(first_part, depth - 1)
-                second_split = split_and_check_german_compounds(second_part, depth - 1)
+                first_split = compound_splitter(first_part, depth - 1)
+                second_split = compound_splitter(second_part, depth - 1)
 
                 if first_split and second_split:
                     compounds.extend(first_split)
@@ -64,20 +60,7 @@ def syllableSplitter():
 
         return compounds
 
-
-
-    def split_sentence_and_check_german_compounds(sentence):
-        words = re.findall(r"[\w']+|[.,!?;:]", sentence)
-        final_splits = []
-        for word in words:
-            if word.isalnum():
-                final_split = split_and_check_german_compounds(word)
-                final_splits.extend(final_split)
-            else:
-                final_splits.append(word)
-        return final_splits,words
-
-    def separate_prefix(word):
+def separate_prefix(word):
         prefixes = ["an", "ab", "auf", "aus", "dis", "ein", "fehl", "her", "hin", "haupt", "in", "dar", "durch",
                     "los", "mit", "nach","ge", "von", "vor", "weg", "um", "un", "ur", "ent", "er", "ver", "zer", "miss",
                     "miß", "niss", "niß", "ex", "non", "super", "trans", "kon", "hoch", "stink", "stock", "tief",
@@ -105,7 +88,8 @@ def syllableSplitter():
 
         return ["", word]
 
-    def split_word_into_syllables(word):
+
+def syllable_splitter(word):
         
         vowels = ['a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü', 'ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
         vowelsdouble = ['ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
@@ -113,7 +97,7 @@ def syllableSplitter():
         new_word = []
         forbidden=['sk','br']
         no_split_word=["tipps","kommt","fällt"]
-    
+        
 
         if word in no_split_word:
             return word
@@ -285,50 +269,12 @@ def syllableSplitter():
                 continue
             i+=1
 
-        
-        
         new_word_string=""
         for el in new_word:
             new_word_string+=el
         new_word_string=new_word_string.replace("-"," ")
         if word.istitle()==True:
+            
             new_word_string=new_word_string[0].upper()+new_word_string[1:]
-        print(new_word_string)
+       
         return new_word_string
-
-    def finish_word(word):
-        prefix, suffix = separate_prefix(word)
-        prefix2, suffix = separate_prefix(suffix)
-        prefix=split_word_into_syllables(prefix)
-        prefix2=split_word_into_syllables(prefix2)
-        separated_suffix = split_word_into_syllables(suffix)
-
-        if prefix != "" and prefix2 != "":
-            separated_word = prefix + " " + prefix2 + " " + separated_suffix
-        elif prefix != "" and prefix2 == "":
-            separated_word = prefix + " " + separated_suffix
-        else:
-            separated_word = separated_suffix
-
-        return separated_word
-
-    # Define the sentence
-
-    # Call the function to split and check if the parts are German
-    final_splits,words = split_sentence_and_check_german_compounds(input)
-    print("Normal words:",words)
-    # Apply syllable splitting to every word in the sentence
-    final_splits_syllable = [finish_word(word) for word in final_splits]
-    print(final_splits)
-
-
-
-    final_splits_syllable=" ".join(final_splits_syllable)
-    final_splits_syllable=re.sub(r'\s{2,}', ' ', final_splits_syllable)
-    final_splits_syllable = re.sub(r'\s+([.,!?;:])', r'\1', final_splits_syllable)
-    # Join the splits into a single string with spaces
-    final_splits_syllable=json.dumps(final_splits_syllable)
-    # Join the splits into a single string with spaces
-
-
-    return final_splits_syllable
