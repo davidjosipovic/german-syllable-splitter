@@ -15,4 +15,7 @@ def german_syllable_splitter():
     
     return syllables
 
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
