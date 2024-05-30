@@ -1,11 +1,42 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [outputValue, setOutputValue] = useState("");
   const [splitMode, setSplitMode] = useState("word"); // State to track split mode (word or sentence)
+
+  useEffect(() => {
+    // Function to call the API on page load
+    const fetchDataOnLoad = async () => {
+      try {
+        const response = await fetch(`/api/python`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ input: inputValue, mode: splitMode }), // Send split mode to API
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("API response:", data);
+          setOutputValue(data);
+        } else {
+          console.error(
+            "API request failed:",
+            response.status,
+            response.statusText
+          );
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchDataOnLoad();
+  }, []); // Dependency array includes inputValue and splitMode
 
   const handleKeyPress = async (event: any) => {
     if (event.key === "Enter") {
