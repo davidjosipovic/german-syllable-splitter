@@ -6,7 +6,7 @@ splitter = Splitter()
 
 def processing_input(sentence):
         
-        words = re.findall(r"[\w']+|[.,!?;:]", sentence)
+        words = re.findall(r"[\w']+|[.,!?;:„“]", sentence)
         compound_list = []
         for word in words:
             if word.isalnum():
@@ -43,6 +43,8 @@ def split_input(input):
     syllable_list = [processing_compounds(compound) for compound in compound_list]
     syllable_string=" ".join(syllable_list)
     syllable_string=re.sub(r'\s{2,}', ' ', syllable_string)
-    final_syllable_string = re.sub(r'\s+([.,!?;:])', r'\1', syllable_string)
-    
+    syllable_string = re.sub(r'\s+([.,!?;:“])', r'\1', syllable_string)
+    final_syllable_string = re.sub(r'([„“])\s+', r'\1', syllable_string)
+
+     
     return final_syllable_string

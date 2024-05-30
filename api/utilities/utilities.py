@@ -7,19 +7,26 @@ dictionary = Dictionary.from_files('dictionary/de_DE')
 splitter = Splitter()
 
 def is_german(word):
-        true_words=["Sonn","Lich"]
-        false_words=["Ans","An","Und","Freund","Ist","Ich","Etsch"]
+    true_bases = ["sonn", "lich", "end", "jugend", "lung", "hand"]
+    false_bases = ["ans", "an", "und", "freund", "ist", "ich", "etsch", "lug", "eichen", "agieren","erker","huldigung","okratisches"]  
+    suffixes = ["", "e", "er", "en"]
+    prefixes = ["", "ge", "ver", "be"] 
+       
+    # Generate true and false words with prefixes and suffixes dynamically 
+    true_words = {prefix + base + suffix for base in true_bases for prefix in prefixes for suffix in suffixes}
+     
+    if word.lower() in false_bases:
+        return False
+    if word.lower() in true_words: 
+        return True
+    
+    # Assuming dictionary.lookup is a function that checks if the word exists in a German dictionary
+    return dictionary.lookup(word.capitalize())
 
-        if word in false_words:
-            return False
-        if word in true_words:
-            return True
-
-        return dictionary.lookup(string.capwords(word))
 
 def compound_splitter(word, depth=2):
-        not_compound_word=["nationen","und","brandenburger","versprochen"]
-        compounds = []
+        not_compound_word=["nationen","und","brandenburger","versprochen","adresse","jemanden","ergeben","zusammen","bernauer"] 
+        compounds = [] 
         if word.lower() in not_compound_word:
             return [word]
         splits = splitter.split_compound(word)
@@ -56,33 +63,36 @@ def compound_splitter(word, depth=2):
         compounds=[c.lower() for c in compounds]
         if word.istitle():
             compounds[0]=compounds[0].title()
-
-        return compounds
+        
+        return compounds 
 
 def separate_prefix(word):
-        prefixes = ["an", "ab", "auf", "aus", "dis", "ein", "fehl", "her", "hin", "haupt", "in", "dar", "durch",
+        prefixes = ["an", "ab", "auf", "aus", "dis", "ein", "her", "hin", "haupt", "in", "dar", "durch",
                     "los", "mit", "nach","ge", "von", "vor", "weg", "um", "un", "ur", "ent", "er", "ver", "zer", "miss",
                     "miß", "niss", "niß", "ex", "non", "super", "trans", "kon", "hoch", "stink", "stock", "tief",
                     "tod", "erz", "unter", "über", "hinter", "wider", "wieder", "weiter", "zurück", "zurecht",
-                    "zusammen", "hyper", "inter","phy","sys","ruhm","rühm","alex","be"]
+                    "zusammen", "hyper", "inter","phy","sys","ruhm","rühm","alex","be","gym"]
         
-        excluded_suffixes = ["ssen", "ts", "er"]
-        excluded_words = ["und", "geben", "wege", "ins","besten"]
+        excluded_suffixes = ["ssen", "ts", "er"] 
+        excluded_words = ["und", "geben", "wege", "ins","besten","geht","universität","antwortet","gestern","beeren","gelb","bernauer"]
         excluded_prefixes = ["eine", "eini","berlin","erst"]
-        special_case = "gereist"
-
-
+        special_case = "gereist" 
+        word_lower=word.lower() 
+   
         for prefix in prefixes:
             word_suffix = word[len(prefix):]
-            
+             
             if (
-                word.startswith(prefix) and 
+                word_lower.startswith(prefix) and 
                 len(word_suffix)>1 and
                 word_suffix not in excluded_suffixes and 
-                word not in excluded_words and 
-                not any(word.startswith(ex_prefix) for ex_prefix in excluded_prefixes) and 
-                (not word.startswith("ger") or word == special_case)
-            ):
+                word_lower not in excluded_words and 
+                not any(word_lower.startswith(ex_prefix) for ex_prefix in excluded_prefixes) and 
+                (not word_lower.startswith("ger") or word_lower == special_case)
+            ):  
+                if word.istitle():
+                    prefix=prefix.title()
+                    
                 return [prefix, word_suffix]
 
         return ["", word]
@@ -90,16 +100,16 @@ def separate_prefix(word):
 
 def syllable_splitter(word):
         
-        vowels = ['a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü', 'ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
+        vowels = ['a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü','é','è', 'ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
         vowelsdouble = ['ei', 'ai', 'ey', 'ay', 'eu', 'äu', 'ie', 'au', 'aa', 'ee', 'oo']
         consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'ß', 'sch', 'ch', 'ck', 'qu', 'ph']
         new_word = []
         forbidden=['sk','br']
-        no_split_word=["tipps","kommt","fällt"]
-        
-
-        if word in no_split_word:
-            return word
+        no_split_word=["gate"]
+         
+   
+        if word.lower() in no_split_word:
+           return word
         
         i = 0
         while i < len(word):
@@ -123,7 +133,7 @@ def syllable_splitter(word):
                 sequence += word[j].lower()
                 j += 1
 
-            new_word.append(sequence)
+            new_word.append(sequence) 
             i = j
         
         # VthV->V-thV
@@ -134,42 +144,42 @@ def syllable_splitter(word):
                 continue
             i+=1
 
-        
+         
         # VCCV->VC-CV
         i=0
         while i<(len(new_word)- 3):
-            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels and new_word[i+1]+new_word[i+2] not in forbidden:
+           
+            if "".join(new_word).lower()=="restaurant":
+                new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+                continue
+            elif new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels and new_word[i+1]+new_word[i+2] not in forbidden and "".join(new_word).lower()!="adresse":
+              
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
             i+=1
         
-        
-
         # VCCCV->VCC-CV
         i=0
         while i<(len(new_word)- 4):
-            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in consonants and new_word[i+3] in vowels:
+            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in consonants and new_word[i+4] in vowels:
                 new_word = new_word[:i+3] + ['-'] + new_word[i+3:]
                 continue
             i+=1
 
-        # VCV->V-CV
+        # VCV->V-CV 
         i=0
         while i<(len(new_word)- 2):
+            
             if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in vowels and (i!=0 or new_word[i] in vowelsdouble) and "".join(new_word[i:i+3])!="ice":
+                if "".join(new_word[i:i+3])=="iru":     
+                    new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+                    continue
                 new_word = new_word[:i+1] + ['-'] + new_word[i+1:]
+            
                 continue
             i+=1
 
        
-
-        # VstV->Vs-tV
-        i=0
-        while i<(len(new_word)- 3):
-            if new_word[i] in vowels and new_word[i+1]=="s" and new_word[i+2]=="t" and new_word[i+3] in vowels:
-                new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
-                continue
-            i+=1
 
         # VCstV->VCs-tV
         i=0
@@ -246,34 +256,57 @@ def syllable_splitter(word):
 
         # CVVC->CV-VC
         i=0
-        while i<(len(new_word)- 3):
+        while i<(len(new_word)- 3):  
             if new_word[i] in consonants and new_word[i+1] in vowels and new_word[i+2] in vowels and new_word[i+3] in consonants:
                 new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
                 continue
             i+=1
-        
-    # VCCV->V-CCV
+ 
+         # CVVC->CV-VC (double vowel)
+        #i=0 
+        #while i<(len(new_word)- 2):
+         
+          #  if new_word[i] in consonants and new_word[i+1] in vowelsdouble and new_word[i+2] in consonants:
+           #     new_word = new_word[:i+1] + list(new_word[i+1]) + new_word[i+2:]
+          #      new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+           #     continue  
+          #  i+=1 
+         
+        # VCCV->V-CCV
         i=0
         while i<(len(new_word)- 3):
-            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels:
+            if new_word[i] in vowels and new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+3] in vowels and "".join(new_word).lower()!="adresse":
+                
                 new_word = new_word[:i+1] + ['-'] + new_word[i+1:]
                 continue
             i+=1
         
         # 2 ista suglasnika u sredini riječi se dijele
         i=0
-        while i<(len(new_word)- 3):
-            if new_word[i+1] in consonants and new_word[i+2] in consonants and new_word[i+1]== new_word[i+2]:
-                new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+        while i<(len(new_word)- 2): 
+            if new_word[i] in consonants and new_word[i+1] in consonants and new_word[i]== new_word[i+1] and new_word[i+2]  in vowels:
+                
+
+                new_word = new_word[:i+1] + ['-'] + new_word[i+1:]
                 continue
             i+=1
 
+         # 2 ista suglasnika u sredini riječi se ne dijele
+        i=0
+        while i<(len(new_word)- 3):
+            if new_word[i] in consonants and new_word[i+1] in consonants and new_word[i]== new_word[i+1] and new_word[i+2] in consonants and new_word[i+3] in vowels:
+                
+
+                new_word = new_word[:i+2] + ['-'] + new_word[i+2:]
+                continue
+            i+=1
+ 
         new_word_string=""
         for el in new_word:
             new_word_string+=el
         new_word_string=new_word_string.replace("-"," ")
         if word.istitle()==True:
-            
+             
             new_word_string=new_word_string[0].upper()+new_word_string[1:]
        
         return new_word_string
