@@ -1,7 +1,5 @@
-import string
 from spylls.hunspell import Dictionary
 from split_words import Splitter
-import string
 
 dictionary = Dictionary.from_files('dictionary/de_DE')
 splitter = Splitter()
