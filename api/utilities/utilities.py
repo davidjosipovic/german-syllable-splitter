@@ -10,7 +10,6 @@ def is_german(word):
     suffixes = ["", "e", "er", "en"]
     prefixes = ["", "ge", "ver", "be"] 
        
-    # Generate true and false words with prefixes and suffixes dynamically 
     true_words = {prefix + base + suffix for base in true_bases for prefix in prefixes for suffix in suffixes}
      
     if word.lower() in false_bases:
@@ -18,7 +17,6 @@ def is_german(word):
     if word.lower() in true_words: 
         return True
     
-    # Assuming dictionary.lookup is a function that checks if the word exists in a German dictionary
     return dictionary.lookup(word.capitalize())
 
 
